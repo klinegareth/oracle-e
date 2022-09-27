@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "dalle-node": "^1.0.7"
+  },
+  "type": "module"
+}
