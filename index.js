@@ -2,21 +2,34 @@ import { Dalle } from "dalle-node";
 import axios from "axios";
 import sharp from "sharp";
 import terminalImage from "terminal-image";
+import inquirer from "inquirer";
 
 const dalle = new Dalle("sess-oMKpLoxhXmo5wt8CmBhQc5ji4f4ZdyfzA8hHzH8Y"); // Bearer Token 
 
-console.log(parsedTarot["tarot-interpretations"]);
-
-const request = await dalle.generate("a tarot card in an 8-bit style", 1);
-
+// Combines user input with prompt and sends it to DALLE 
+const { question } = await inquirer.prompt([
+  {
+    type: "input",
+	name: "question",
+	message: "What question do you need an answer to?\n",
+	  },
+	]);
+const prompt = `A tarot card in an 8-bit style to answer the question, "${question}"`;
+const request = await dalle.generate(`${prompt}` , 1);
 const generations = request.data;
-console.log(JSON.stringify(generations, null, 1));
 
 for (const generation in generations) {
+	// Get image from DALLE response data
 	let imagePath = generations[generation].generation.image_path;
 	let imageResponse = await axios.get(imagePath, { responseType: "arraybuffer" });
 	let image = await sharp(imageResponse.data).toFormat('png').toBuffer();
+	
+	// Save image to file 
+	let date = new Date();
+	let dateString = date.toISOString().split('T')[0];
+	let fileName = `Card ${generation}-${dateString}.png`;
+	await sharp(image).toFile(`./cards/${fileName}`);
 
-	const output = await terminalImage.buffer(image);
-	console.log(output);
+	// Display image in terminal
+	console.log(await terminalImage.buffer(image));
 }
